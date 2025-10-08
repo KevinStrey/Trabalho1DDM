@@ -1,9 +1,11 @@
 package br.com.udesc.prototipotrabalho1
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -26,18 +28,23 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import br.com.udesc.prototipotrabalho1.data.AppContainer
 import br.com.udesc.prototipotrabalho1.data.DefaultAppContainer
-import br.com.udesc.prototipotrabalho1.ui.screens.HomeScreen
-import br.com.udesc.prototipotrabalho1.ui.screens.NewDormitoryScreen
-import br.com.udesc.prototipotrabalho1.ui.screens.NewFamilyScreen
 import br.com.udesc.prototipotrabalho1.ui.theme.PrototipoTrabalho1Theme
 
 // Imports das telas refatoradas
+import br.com.udesc.prototipotrabalho1.ui.feature_dormitory.new_dormitory.NewDormitoryScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_dormitory.new_dormitory.NewDormitoryViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_list.FamiliesScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_list.FamiliesViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_members.FamilyMembersScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_members.FamilyMembersViewModelFactory
+import br.com.udesc.prototipotrabalho1.ui.feature_families.new_family.NewFamilyScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_families.new_family.NewFamilyViewModelFactory
+import br.com.udesc.prototipotrabalho1.ui.feature_families.new_member.NewMemberScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_families.new_member.NewMemberViewModelFactory
+import br.com.udesc.prototipotrabalho1.ui.feature_home.HomeScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_home.HomeViewModelFactory
 
-// (O resto das sealed classes e data classes permanecem as mesmas)
+
 sealed class NavRoute(val route: String) {
     object Home : NavRoute("home")
     object Families : NavRoute("families")
@@ -45,6 +52,7 @@ sealed class NavRoute(val route: String) {
     object Settings : NavRoute("settings")
     object NewFamily : NavRoute("new_family")
     object NewDormitory : NavRoute("new_dormitory")
+    object NewMember : NavRoute("new_member") // ROTA ADICIONADA
     object FamilyMembers : NavRoute("family_members/{familyId}") {
         fun createRoute(familyId: Int) = "family_members/$familyId"
     }
@@ -62,6 +70,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var appContainer: AppContainer
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -76,6 +85,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainApp(appContainer: AppContainer) {
     val navController = rememberNavController()
@@ -109,7 +119,10 @@ fun MainApp(appContainer: AppContainer) {
             startDestination = NavRoute.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(NavRoute.Home.route) { HomeScreen(navController) }
+            composable(NavRoute.Home.route) {
+                val factory = HomeViewModelFactory()
+                HomeScreen(navController, factory)
+            }
 
             composable(NavRoute.Families.route) {
                 val factory = FamiliesViewModelFactory(appContainer.getFamiliesUseCase)
@@ -119,21 +132,17 @@ fun MainApp(appContainer: AppContainer) {
                 )
             }
 
-            // --- CONEXÃO DA NOVA TELA DE MEMBROS ---
             composable(
                 route = NavRoute.FamilyMembers.route,
                 arguments = listOf(navArgument("familyId") { type = NavType.IntType })
             ) { backStackEntry ->
-                // 1. Extraia o familyId dos argumentos da rota
                 val familyId = backStackEntry.arguments?.getInt("familyId")
 
                 if (familyId != null) {
-                    // 2. Crie a Factory específica para este ViewModel
                     val factory = FamilyMembersViewModelFactory(
                         familyId = familyId,
                         getFamilyByIdUseCase = appContainer.getFamilyByIdUseCase
                     )
-                    // 3. Passe a Factory para a tela
                     FamilyMembersScreen(
                         navController = navController,
                         factory = factory
@@ -143,8 +152,31 @@ fun MainApp(appContainer: AppContainer) {
                 }
             }
 
-            composable(NavRoute.NewFamily.route) { NewFamilyScreen(navController) }
-            composable(NavRoute.NewDormitory.route) { NewDormitoryScreen(navController) }
+            composable(NavRoute.NewFamily.route) {
+                val factory = NewFamilyViewModelFactory()
+                NewFamilyScreen(
+                    navController = navController,
+                    factory = factory
+                )
+            }
+
+            composable(NavRoute.NewDormitory.route) {
+                val factory = NewDormitoryViewModelFactory()
+                NewDormitoryScreen(
+                    navController = navController,
+                    factory = factory
+                )
+            }
+
+            // --- CONEXÃO DA NOVA TELA DE MEMBRO ---
+            composable(NavRoute.NewMember.route) {
+                val factory = NewMemberViewModelFactory()
+                NewMemberScreen(
+                    navController = navController,
+                    factory = factory
+                )
+            }
+
             composable(NavRoute.Professionals.route) { PlaceholderScreen("Profissionais") }
             composable(NavRoute.Settings.route) { PlaceholderScreen("Configurações") }
         }
