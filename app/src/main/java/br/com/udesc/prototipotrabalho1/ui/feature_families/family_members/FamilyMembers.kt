@@ -3,8 +3,10 @@ package br.com.udesc.prototipotrabalho1.ui.feature_families.family_members
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import br.com.udesc.prototipotrabalho1.NavRoute
 import br.com.udesc.prototipotrabalho1.R
 
 @Composable
@@ -42,7 +45,7 @@ fun FamilyMembersScreen(
     FamilyMembersContent(
         uiState = uiState,
         onNavigateBack = { navController.popBackStack() },
-        onNewInteraction = { /* TODO: Navegar para nova interação */ }
+        onNewInteraction = { navController.navigate(NavRoute.NewInteraction.route) }
     )
 }
 
@@ -78,11 +81,13 @@ private fun FamilyMembersContent(
         },
         containerColor = backgroundColor
     ) { innerPadding ->
+        // A Column agora tem o modificador verticalScroll
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState()) // ✅ CORREÇÃO ADICIONADA AQUI
         ) {
             if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -90,7 +95,6 @@ private fun FamilyMembersContent(
                 }
             } else if (family != null) {
                 // Conteúdo da tela (Membros, Domicílio, Interações)
-                // (O código visual daqui para baixo é o mesmo que o original)
                 Text("Membros da Família", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 FamilyMemberItem(painterResource(id = R.drawable.maria), "Maria Silva", "Parente", highlightColor)
@@ -122,6 +126,9 @@ private fun FamilyMembersContent(
                         Text("Nova Interação", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
+                // Adiciona um espaçador no final para melhor visualização ao rolar
+                Spacer(modifier = Modifier.height(16.dp))
+
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Família não encontrada.")

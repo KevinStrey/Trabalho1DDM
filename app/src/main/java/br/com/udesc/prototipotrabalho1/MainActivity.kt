@@ -1,5 +1,6 @@
 package br.com.udesc.prototipotrabalho1
 
+// Imports das telas refatoradas
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,11 +9,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -28,9 +35,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import br.com.udesc.prototipotrabalho1.data.AppContainer
 import br.com.udesc.prototipotrabalho1.data.DefaultAppContainer
-import br.com.udesc.prototipotrabalho1.ui.theme.PrototipoTrabalho1Theme
-
-// Imports das telas refatoradas
 import br.com.udesc.prototipotrabalho1.ui.feature_dormitory.new_dormitory.NewDormitoryScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_dormitory.new_dormitory.NewDormitoryViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_list.FamiliesScreen
@@ -39,29 +43,42 @@ import br.com.udesc.prototipotrabalho1.ui.feature_families.family_members.Family
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_members.FamilyMembersViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_family.NewFamilyScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_family.NewFamilyViewModelFactory
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction.NewInteractionScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction.NewInteractionViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_member.NewMemberScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_member.NewMemberViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_home.HomeScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_home.HomeViewModelFactory
+import br.com.udesc.prototipotrabalho1.ui.theme.PrototipoTrabalho1Theme
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_list.HomeVisitsScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_list.HomeVisitsViewModelFactory
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_report.VisitReportScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_report.VisitReportViewModelFactory
+
 
 
 sealed class NavRoute(val route: String) {
     object Home : NavRoute("home")
     object Families : NavRoute("families")
-    object Professionals : NavRoute("professionals")
     object Settings : NavRoute("settings")
     object NewFamily : NavRoute("new_family")
     object NewDormitory : NavRoute("new_dormitory")
-    object NewMember : NavRoute("new_member") // ROTA ADICIONADA
+    object NewMember : NavRoute("new_member")
+    object NewInteraction : NavRoute("new_interaction")
+    object Visit : NavRoute("visit") // <-- ADICIONE/MODIFIQUE ESTA LINHA
     object FamilyMembers : NavRoute("family_members/{familyId}") {
         fun createRoute(familyId: Int) = "family_members/$familyId"
     }
+    object VisitReport : NavRoute("visit_report/{visitId}") { // <-- ADICIONE ESTA ROTA
+        fun createRoute(visitId: Int) = "visit_report/$visitId"
+    }
+
 }
 data class BottomNavItem(val route: String, val label: String, val icon: ImageVector)
 val bottomNavItems = listOf(
     BottomNavItem(NavRoute.Home.route, "Início", Icons.Default.Home),
     BottomNavItem(NavRoute.Families.route, "Famílias", Icons.Default.People),
-    BottomNavItem(NavRoute.Professionals.route, "Profissionais", Icons.Default.MedicalServices),
+    BottomNavItem(NavRoute.Visit.route, "Visitas", Icons.Default.Groups),
     BottomNavItem(NavRoute.Settings.route, "Configurações", Icons.Default.Settings)
 )
 
@@ -177,7 +194,48 @@ fun MainApp(appContainer: AppContainer) {
                 )
             }
 
-            composable(NavRoute.Professionals.route) { PlaceholderScreen("Profissionais") }
+            // --- CONEXÃO DA NOVA TELA DE NOVA INTERAÇÃO ---
+            composable(NavRoute.NewInteraction.route) {
+                val factory = NewInteractionViewModelFactory()
+                NewInteractionScreen(
+                    navController = navController,
+                    factory = factory
+                )
+            }
+
+            // --- CONEXÃO DA NOVA TELA DE VISITAS ---
+            composable(NavRoute.Visit.route) {
+                // A anotação @RequiresApi é necessária aqui porque a tela e o ViewModel usam APIs de data recentes
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val factory = HomeVisitsViewModelFactory(appContainer.getVisitsByDateUseCase)
+                    HomeVisitsScreen(
+                        navController = navController,
+                        factory = factory
+                    )
+                } else {
+                    // Fallback para versões do Android mais antigas que não suportam a tela
+                    PlaceholderScreen("Funcionalidade indisponível nesta versão do Android")
+                }
+            }
+            // --- CONEXÃO DA NOVA TELA DE RELATÓRIO DE VISITA ---
+            composable(
+                route = NavRoute.VisitReport.route,
+                arguments = listOf(navArgument("visitId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val visitId = backStackEntry.arguments?.getInt("visitId")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && visitId != null) {
+                    val factory = VisitReportViewModelFactory(
+                        visitId = visitId,
+                        getVisitByIdUseCase = appContainer.getVisitByIdUseCase
+                    )
+                    VisitReportScreen(
+                        navController = navController,
+                        factory = factory
+                    )
+                } else {
+                    Text("Erro: ID da visita não encontrado ou versão do Android incompatível.")
+                }
+            }
             composable(NavRoute.Settings.route) { PlaceholderScreen("Configurações") }
         }
     }
