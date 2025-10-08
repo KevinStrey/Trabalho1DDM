@@ -63,9 +63,9 @@ fun InfoTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    modifier: Modifier = Modifier,
-    readOnly: Boolean = false,
-    trailingIcon: @Composable (() -> Unit)? = null
+    modifier: Modifier = Modifier, // Adicionado
+    readOnly: Boolean = false, // Adicionado
+    trailingIcon: @Composable (() -> Unit)? = null // Adicionado
 ) {
     val textFieldBackgroundColor = Color(0xFFE0F2F1)
     val placeholderColor = Color.Gray.copy(alpha = 0.7f)
@@ -74,11 +74,11 @@ fun InfoTextField(
         value = value,
         onValueChange = onValueChange,
         placeholder = { Text(placeholder, color = placeholderColor) },
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(), // modifier é usado aqui
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
-        readOnly = readOnly,
-        trailingIcon = trailingIcon,
+        readOnly = readOnly, // readOnly é usado aqui
+        trailingIcon = trailingIcon, // trailingIcon é usado aqui
         colors = TextFieldDefaults.colors(
             focusedContainerColor = textFieldBackgroundColor,
             unfocusedContainerColor = textFieldBackgroundColor,

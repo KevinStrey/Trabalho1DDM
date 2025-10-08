@@ -26,12 +26,6 @@ import androidx.navigation.NavController
 import br.com.udesc.prototipotrabalho1.NavRoute
 import br.com.udesc.prototipotrabalho1.domain.model.Family
 
-/**
- * Composable "inteligente" (stateful).
- *
- * Sua responsabilidade é se conectar ao ViewModel para obter o estado e
- * passar os dados para os Composables de apresentação ("burros").
- */
 @Composable
 fun FamiliesScreen(
     navController: NavController,
@@ -52,12 +46,6 @@ fun FamiliesScreen(
     )
 }
 
-/**
- * Composable de apresentação "burro" (stateless).
- *
- * Não possui lógica, apenas recebe o estado e emite eventos.
- * É reutilizável e fácil de prever e testar em isolation.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FamiliesContent(
@@ -116,6 +104,7 @@ private fun FamiliesContent(
     }
 }
 
+// ✅ CORREÇÃO APLICADA AQUI
 @Composable
 private fun FamilyListItem(
     family: Family,
@@ -136,17 +125,11 @@ private fun FamilyListItem(
                 .clip(CircleShape)
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(
-                text = family.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = family.address,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
-        }
+        // A Coluna agora contém apenas o nome da família
+        Text(
+            text = family.name,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

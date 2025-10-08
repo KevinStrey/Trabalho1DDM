@@ -123,10 +123,19 @@ private fun FamilyMembersContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Seção de Domicílio (continua igual)
+                // --- SEÇÃO DE DOMICÍLIO (ATUALIZADA) ---
                 Text("Domicílio", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
-                InfoItem(Icons.Default.Home, lightGrayColor, "Endereço", family.address)
+
+                // O endereço agora vem do objeto 'dormitory' do uiState.
+                // Usamos o operador 'let' para exibir o InfoItem apenas se o domicílio não for nulo.
+                uiState.dormitory?.let { dormitory ->
+                    InfoItem(Icons.Default.Home, lightGrayColor, "Endereço", dormitory.address)
+                } ?: run {
+                    // Texto exibido se nenhum domicílio for encontrado para a família
+                    Text("Nenhum domicílio cadastrado.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // --- SEÇÃO DE INTERAÇÕES (DINÂMICA) ---

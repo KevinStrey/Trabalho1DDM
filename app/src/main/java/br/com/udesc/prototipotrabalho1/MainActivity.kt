@@ -63,7 +63,6 @@ sealed class NavRoute(val route: String) {
     object NewFamily : NavRoute("new_family")
     object NewDormitory : NavRoute("new_dormitory")
 
-
     object NewInteraction : NavRoute("new_interaction/{familyId}") {
         fun createRoute(familyId: Int) = "new_interaction/$familyId"
     }
@@ -161,12 +160,13 @@ fun MainApp(appContainer: AppContainer) {
                 val familyId = backStackEntry.arguments?.getInt("familyId")
 
                 if (familyId != null) {
-                    // ATUALIZAÇÃO: Passe o novo UseCase para a Factory
+                    // ATUALIZAÇÃO: Passe o novo UseCase do Domicílio para a Factory
                     val factory = FamilyMembersViewModelFactory(
                         familyId = familyId,
                         getFamilyByIdUseCase = appContainer.getFamilyByIdUseCase,
                         getMembersByFamilyIdUseCase = appContainer.getMembersByFamilyIdUseCase,
-                        getInteractionsByFamilyIdUseCase = appContainer.getInteractionsByFamilyIdUseCase // <-- Adicionado
+                        getInteractionsByFamilyIdUseCase = appContainer.getInteractionsByFamilyIdUseCase,
+                        getDormitoryByFamilyIdUseCase = appContainer.getDormitoryByFamilyIdUseCase // <-- Adicionado
                     )
                     FamilyMembersScreen(
                         navController = navController,
@@ -187,13 +187,18 @@ fun MainApp(appContainer: AppContainer) {
                 )
             }
 
+            // --- CONEXÃO DA TELA DE DOMICÍLIO (FINAL) ---
             composable(NavRoute.NewDormitory.route) {
-                val factory = NewDormitoryViewModelFactory()
+                val factory = NewDormitoryViewModelFactory(
+                    addDormitoryUseCase = appContainer.addDormitoryUseCase,
+                    getFamiliesUseCase = appContainer.getFamiliesUseCase
+                )
                 NewDormitoryScreen(
                     navController = navController,
                     factory = factory
                 )
             }
+
 
             // --- CONEXÃO DA NOVA TELA DE MEMBRO (CORRIGIDA) ---
             composable(

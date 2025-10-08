@@ -106,7 +106,7 @@ private fun NewFamilyContent(
                     textStyle = TextStyle(fontSize = 16.sp)
                 )
             }
-            Spacer(Modifier.height(24.dp))
+            /*Spacer(Modifier.height(24.dp))
             FormSection(label = "Endereço") {
                 TextField(
                     value = uiState.address,
@@ -118,7 +118,7 @@ private fun NewFamilyContent(
                     colors = textFieldColors(textFieldBackgroundColor),
                     textStyle = TextStyle(fontSize = 16.sp)
                 )
-            }
+            }*/
             Spacer(Modifier.height(24.dp))
             FormSection(label = "Número de Membros") {
                 TextField(

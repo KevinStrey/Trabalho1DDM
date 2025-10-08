@@ -95,7 +95,13 @@ fun HomeScreen(
                     text = "Cadastrar\nDomicílio",
                     icon = Icons.Default.Home,
                     contentDescription = "Cadastrar Domicílio",
-                    onClick = { navController.navigate(NavRoute.NewDormitory.route) }
+                    onClick = {
+                        // TODO: No futuro, esta ação deve primeiro pedir ao usuário
+                        // para selecionar uma família para obter um ID real.
+                        // Por enquanto, usamos um ID de exemplo.
+                        val DUMMY_FAMILY_ID = 1
+                        navController.navigate(NavRoute.NewDormitory.route)
+                    }
                 )
             }
         }

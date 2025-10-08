@@ -1,20 +1,13 @@
 package br.com.udesc.prototipotrabalho1.data
 
 import android.os.Build
-import androidx.annotation.RequiresApi
-import br.com.udesc.prototipotrabalho1.data.repository.FakeFamilyRepositoryImpl
-import br.com.udesc.prototipotrabalho1.data.repository.FakeInteractionRepositoryImpl
-import br.com.udesc.prototipotrabalho1.data.repository.FakeMemberRepositoryImpl
-import br.com.udesc.prototipotrabalho1.data.repository.FakeVisitRepositoryImpl
-import br.com.udesc.prototipotrabalho1.domain.repository.FamilyRepository
-import br.com.udesc.prototipotrabalho1.domain.repository.InteractionRepository
-import br.com.udesc.prototipotrabalho1.domain.repository.MemberRepository
-import br.com.udesc.prototipotrabalho1.domain.repository.VisitRepository
+import br.com.udesc.prototipotrabalho1.data.repository.*
+import br.com.udesc.prototipotrabalho1.domain.repository.*
 import br.com.udesc.prototipotrabalho1.domain.usecase.*
 
 /**
  * Interface para o contêiner de dependências.
- * Foi atualizada para incluir as dependências de Interação.
+ * Foi atualizada para incluir as dependências de Domicílio.
  */
 interface AppContainer {
     // Família
@@ -32,10 +25,15 @@ interface AppContainer {
     val addMemberUseCase: AddMemberUseCase
     val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase
 
-    // Interação (Adicionado)
+    // Interação
     val interactionRepository: InteractionRepository
     val addInteractionUseCase: AddInteractionUseCase
     val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase
+
+    // Domicílio (Adicionado)
+    val dormitoryRepository: DormitoryRepository
+    val addDormitoryUseCase: AddDormitoryUseCase
+    val getDormitoryByFamilyIdUseCase: GetDormitoryByFamilyIdUseCase
 }
 
 /**
@@ -80,7 +78,7 @@ class DefaultAppContainer : AppContainer {
         GetMembersByFamilyIdUseCase(memberRepository)
     }
 
-    // --- Dependências de Interação (Adicionado) ---
+    // --- Dependências de Interação ---
     override val interactionRepository: InteractionRepository by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             FakeInteractionRepositoryImpl()
@@ -97,5 +95,16 @@ class DefaultAppContainer : AppContainer {
     }
     override val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase by lazy {
         GetInteractionsByFamilyIdUseCase(interactionRepository)
+    }
+
+    // --- Dependências de Domicílio (Adicionado) ---
+    override val dormitoryRepository: DormitoryRepository by lazy {
+        FakeDormitoryRepositoryImpl()
+    }
+    override val addDormitoryUseCase: AddDormitoryUseCase by lazy {
+        AddDormitoryUseCase(dormitoryRepository)
+    }
+    override val getDormitoryByFamilyIdUseCase: GetDormitoryByFamilyIdUseCase by lazy {
+        GetDormitoryByFamilyIdUseCase(dormitoryRepository)
     }
 }

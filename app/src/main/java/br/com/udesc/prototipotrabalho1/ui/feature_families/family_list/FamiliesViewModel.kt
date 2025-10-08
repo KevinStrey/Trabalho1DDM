@@ -55,8 +55,8 @@ class FamiliesViewModel(
             allFamilies
         } else {
             allFamilies.filter {
-                it.name.contains(query, ignoreCase = true) ||
-                        it.address.contains(query, ignoreCase = true)
+                // A busca agora é feita apenas pelo nome, pois o endereço não está mais no objeto Family.
+                it.name.contains(query, ignoreCase = true)
             }
         }
         _uiState.update { it.copy(families = filteredList) }
