@@ -3,7 +3,6 @@ package br.com.udesc.prototipotrabalho1.ui.feature_families.new_member
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +31,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import br.com.udesc.prototipotrabalho1.common.composables.InfoTextField
-import br.com.udesc.prototipotrabalho1.common.composables.SelectableTextField
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
@@ -70,6 +69,8 @@ fun NewMemberScreen(
     )
 }
 
+// ui/feature_families/new_member/NewMemberScreen.kt
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NewMemberContent(
@@ -80,8 +81,10 @@ private fun NewMemberContent(
 ) {
     val backgroundColor = Color(0xFFF0F8F7)
     val highlightColor = Color(0xFF26C4C6)
+    val kinshipOptions = listOf("Chefe da Família", "Cônjuge", "Filho(a)", "Outro Parente")
+    val textFieldBackgroundColor = Color(0xFFE0F2F1) // Cor para o TextField
+    val placeholderColor = Color.Gray.copy(alpha = 0.7f) // Cor para o placeholder
 
-    // Lançador para a galeria de imagens
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -112,14 +115,14 @@ private fun NewMemberContent(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Seção da Foto
+            // Seção da Foto (permanece igual)
             Box(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
                     .background(Color.LightGray)
                     .border(2.dp, highlightColor, CircleShape)
-                    .clickable { imagePickerLauncher.launch("image/*") }, // Abre a galeria
+                    .clickable { imagePickerLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
                 if (uiState.photoUri != null) {
@@ -157,11 +160,45 @@ private fun NewMemberContent(
                 placeholder = "Data de Nascimento"
             )
             Spacer(modifier = Modifier.height(16.dp))
-            SelectableTextField(
-                value = uiState.kinship,
-                placeholder = "Parentesco com o Chefe",
-                onClick = { /* Lógica para abrir seleção */ }
-            )
+
+            // --- CORREÇÃO DO DROPDOWN ---
+            ExposedDropdownMenuBox(
+                expanded = uiState.isKinshipDropdownExpanded,
+                onExpandedChange = { onEvent(if (it) NewMemberEvent.OnKinshipDropdownClicked else NewMemberEvent.OnKinshipDropdownDismiss) }
+            ) {
+                // Usando o TextField padrão do Material 3 aqui, pois ele aceita trailingIcon
+                TextField(
+                    value = uiState.kinship,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Parentesco com o Chefe", color = placeholderColor) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = uiState.isKinshipDropdownExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = textFieldBackgroundColor,
+                        unfocusedContainerColor = textFieldBackgroundColor,
+                        disabledContainerColor = textFieldBackgroundColor,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    textStyle = TextStyle(fontSize = 16.sp)
+                )
+
+                ExposedDropdownMenu(
+                    expanded = uiState.isKinshipDropdownExpanded,
+                    onDismissRequest = { onEvent(NewMemberEvent.OnKinshipDropdownDismiss) }
+                ) {
+                    kinshipOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = { onEvent(NewMemberEvent.OnKinshipChanged(option)) }
+                        )
+                    }
+                }
+            }
+            // --- FIM DA CORREÇÃO ---
+
             Spacer(modifier = Modifier.height(16.dp))
             InfoTextField(
                 value = uiState.healthInfo,
@@ -171,10 +208,12 @@ private fun NewMemberContent(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Botão Adicionar Membro
+            // Botão Adicionar Membro (permanece igual)
             Button(
                 onClick = { onEvent(NewMemberEvent.OnAddMemberClicked) },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = highlightColor,

@@ -1,5 +1,7 @@
 package br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -10,31 +12,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NewInteractionScreen(
     navController: NavController,
     factory: NewInteractionViewModelFactory
 ) {
-    var interactionType by remember { mutableStateOf("") }
-    var interactionDate by remember { mutableStateOf("") }
-    var interactionSummary by remember { mutableStateOf("") }
-    var nextSteps by remember { mutableStateOf("") }
+    val viewModel: NewInteractionViewModel = viewModel(factory = factory)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val highlightColor = Color(0xFF26C4C6) // Cor do seu app
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                UiEvent.SaveSuccess -> navController.popBackStack()
+                is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
+
+    NewInteractionContent(
+        uiState = uiState,
+        onEvent = viewModel::onEvent,
+        snackbarHostState = snackbarHostState,
+        onNavigateBack = { navController.popBackStack() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NewInteractionContent(
+    uiState: NewInteractionUiState,
+    onEvent: (NewInteractionEvent) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onNavigateBack: () -> Unit
+) {
+    val highlightColor = Color(0xFF26C4C6)
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Nova Interação") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
-                        )
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
@@ -49,57 +75,40 @@ fun NewInteractionScreen(
         ) {
             Text("Detalhes da Interação", style = MaterialTheme.typography.titleMedium)
 
-            // Campo Tipo de Interação (Dropdown)
             InteractionTypeDropdown(
-                selectedType = interactionType,
-                onTypeSelected = { interactionType = it }
+                selectedType = uiState.interactionType,
+                onTypeSelected = { onEvent(NewInteractionEvent.OnInteractionTypeChanged(it)) }
             )
 
-            // Campo Data
             OutlinedTextField(
-                value = interactionDate,
-                onValueChange = {
-                    // Limita o input a 8 caracteres numéricos
-                    if (it.length <= 8) {
-                        interactionDate = it.filter { char -> char.isDigit() }
-                    }
-                },
+                value = uiState.interactionDate,
+                onValueChange = { onEvent(NewInteractionEvent.OnDateChanged(it)) },
                 label = { Text("Data") },
-                placeholder = { Text("DD/MM/AAAA") },
+                placeholder = { Text("DDMMAAAA") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            // Campo Resumo da Interação
             OutlinedTextField(
-                value = interactionSummary,
-                onValueChange = { interactionSummary = it },
+                value = uiState.interactionSummary,
+                onValueChange = { onEvent(NewInteractionEvent.OnSummaryChanged(it)) },
                 label = { Text("Resumo da Interação") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
+                modifier = Modifier.fillMaxWidth().height(120.dp),
             )
 
-            // Campo Próximos Passos
             OutlinedTextField(
-                value = nextSteps,
-                onValueChange = { nextSteps = it },
+                value = uiState.nextSteps,
+                onValueChange = { onEvent(NewInteractionEvent.OnNextStepsChanged(it)) },
                 label = { Text("Próximos Passos") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
+                modifier = Modifier.fillMaxWidth().height(120.dp),
             )
 
-            // Espaçador para empurrar o botão para baixo
             Spacer(modifier = Modifier.weight(1f))
 
-            // Botão Salvar
             Button(
-                onClick = { /* TODO */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                onClick = { onEvent(NewInteractionEvent.OnSaveClicked) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = highlightColor)
             ) {
                 Text("Salvar Interação", color = Color.White)
@@ -127,13 +136,9 @@ fun InteractionTypeDropdown(
             readOnly = true,
             label = { Text("Tipo de Interação") },
             placeholder = { Text("Selecione") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
+            modifier = Modifier.menuAnchor().fillMaxWidth()
         )
         ExposedDropdownMenu(
             expanded = expanded,

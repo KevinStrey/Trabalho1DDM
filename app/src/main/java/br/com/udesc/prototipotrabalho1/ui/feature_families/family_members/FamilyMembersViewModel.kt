@@ -1,24 +1,25 @@
 package br.com.udesc.prototipotrabalho1.ui.feature_families.family_members
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import br.com.udesc.prototipotrabalho1.domain.model.Family
+import br.com.udesc.prototipotrabalho1.domain.model.Interaction
 import br.com.udesc.prototipotrabalho1.domain.model.Member
 import br.com.udesc.prototipotrabalho1.domain.usecase.GetFamilyByIdUseCase
+import br.com.udesc.prototipotrabalho1.domain.usecase.GetInteractionsByFamilyIdUseCase
 import br.com.udesc.prototipotrabalho1.domain.usecase.GetMembersByFamilyIdUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel para a FamilyMembersScreen.
- *
- * Responsável por carregar os detalhes de uma família específica e a lista de seus membros.
- */
+@RequiresApi(Build.VERSION_CODES.O)
 class FamilyMembersViewModel(
     private val familyId: Int,
     private val getFamilyByIdUseCase: GetFamilyByIdUseCase,
-    private val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase // Adicionado
+    private val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase,
+    private val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase // Adicionado
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FamilyMembersUiState())
@@ -26,7 +27,8 @@ class FamilyMembersViewModel(
 
     init {
         loadFamilyDetails()
-        loadMembers() // Adicionado
+        loadMembers()
+        loadInteractions() // Adicionado
     }
 
     private fun loadFamilyDetails() {
@@ -42,7 +44,6 @@ class FamilyMembersViewModel(
         }
     }
 
-    // Nova função para carregar os membros
     private fun loadMembers() {
         getMembersByFamilyIdUseCase(familyId)
             .onEach { members ->
@@ -50,31 +51,35 @@ class FamilyMembersViewModel(
             }
             .launchIn(viewModelScope)
     }
+
+    // Nova função para carregar as interações
+    private fun loadInteractions() {
+        getInteractionsByFamilyIdUseCase(familyId)
+            .onEach { interactions ->
+                _uiState.update { it.copy(interactions = interactions) }
+            }
+            .launchIn(viewModelScope)
+    }
 }
 
-/**
- * Representa o estado visual da FamilyMembersScreen.
- * Agora inclui a lista de membros.
- */
 data class FamilyMembersUiState(
     val isLoading: Boolean = true,
     val family: Family? = null,
-    val members: List<Member> = emptyList() // Adicionado
+    val members: List<Member> = emptyList(),
+    val interactions: List<Interaction> = emptyList() // Adicionado
 )
 
-/**
- * Fábrica para criar o FamilyMembersViewModel.
- * Atualizada para receber o novo UseCase.
- */
+@RequiresApi(Build.VERSION_CODES.O)
 class FamilyMembersViewModelFactory(
     private val familyId: Int,
     private val getFamilyByIdUseCase: GetFamilyByIdUseCase,
-    private val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase // Adicionado
+    private val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase,
+    private val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase // Adicionado
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FamilyMembersViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return FamilyMembersViewModel(familyId, getFamilyByIdUseCase, getMembersByFamilyIdUseCase) as T
+            return FamilyMembersViewModel(familyId, getFamilyByIdUseCase, getMembersByFamilyIdUseCase, getInteractionsByFamilyIdUseCase) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

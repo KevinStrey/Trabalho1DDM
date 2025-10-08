@@ -1,5 +1,7 @@
 package br.com.udesc.prototipotrabalho1.ui.feature_families.family_members
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -35,8 +37,10 @@ import br.com.udesc.prototipotrabalho1.domain.model.Member
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import br.com.udesc.prototipotrabalho1.R
+import java.time.format.DateTimeFormatter
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FamilyMembersScreen(
     navController: NavController,
@@ -48,19 +52,23 @@ fun FamilyMembersScreen(
     FamilyMembersContent(
         uiState = uiState,
         onNavigateBack = { navController.popBackStack() },
-        onNewInteraction = { navController.navigate(NavRoute.NewInteraction.route) },
-        onAddMember = { familyId ->
+        onNewInteraction = { familyId ->
+            navController.navigate(NavRoute.NewInteraction.createRoute(familyId))
+        },
+                onAddMember = { familyId ->
             navController.navigate(NavRoute.NewMember.createRoute(familyId))
         }
+
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FamilyMembersContent(
     uiState: FamilyMembersUiState,
     onNavigateBack: () -> Unit,
-    onNewInteraction: () -> Unit,
+    onNewInteraction: (familyId: Int) -> Unit,
     onAddMember: (Int) -> Unit
 ) {
     val family = uiState.family
@@ -96,19 +104,17 @@ private fun FamilyMembersContent(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            if (uiState.isLoading && uiState.family == null) { // Mostra o loading apenas na carga inicial
+            if (uiState.isLoading && uiState.family == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (family != null) {
-                // --- SEÇÃO DE MEMBROS DA FAMÍLIA (DINÂMICA) ---
+                // Seção de Membros (continua igual)
                 Text("Membros da Família", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
-
                 if (uiState.members.isEmpty()) {
                     Text("Nenhum membro cadastrado.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
                 } else {
-                    // Renderiza a lista de membros que vem do ViewModel
                     uiState.members.forEach { member ->
                         FamilyMemberItem(member = member, roleColor = highlightColor)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -117,28 +123,70 @@ private fun FamilyMembersContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Seção de Domicílio (continua igual)
                 Text("Domicílio", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 InfoItem(Icons.Default.Home, lightGrayColor, "Endereço", family.address)
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // --- SEÇÃO DE INTERAÇÕES (DINÂMICA) ---
                 Text("Interações", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
-                InfoItem(Icons.Default.CalendarToday, lightGrayColor, "Visita domiciliar", "20/07/2024")
-                Spacer(modifier = Modifier.height(12.dp))
-                InfoItem(Icons.Default.Phone, lightGrayColor, "Contato telefônico", "15/07/2024")
+
+                if (uiState.interactions.isEmpty()) {
+                    Text("Nenhuma interação registrada.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                } else {
+                    // Renderiza a lista de interações que vem do ViewModel
+                    uiState.interactions.forEach { interaction ->
+                        val icon = when (interaction.type) {
+                            "Contato telefônico" -> Icons.Default.Phone
+                            else -> Icons.Default.CalendarToday // Ícone padrão para visita
+                        }
+                        // Formata a data para exibição
+                        val dateFormatter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                        } else { null }
+                        val formattedDate = dateFormatter?.format(interaction.date) ?: interaction.date.toString()
+
+                        InfoItem(
+                            icon = icon,
+                            iconBackgroundColor = lightGrayColor,
+                            title = interaction.type,
+                            detail = formattedDate
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+                // --- FIM DA SEÇÃO DE INTERAÇÕES ---
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Botão Nova Interação
                     Button(
-                        onClick = onNewInteraction,
+                        onClick = { family?.id?.let { onNewInteraction(it) } },
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(containerColor = highlightColor),
-                        modifier = Modifier.height(56.dp)
+                        modifier = Modifier.weight(1f) // Ocupa metade do espaço
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Nova Interação", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Interação", fontSize = 14.sp)
+                    }
+
+                    // Botão Adicionar Membro
+                    Button(
+                        onClick = { family?.id?.let { onAddMember(it) } },
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(containerColor = highlightColor),
+                        modifier = Modifier.weight(1f) // Ocupa a outra metade
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Membro", fontSize = 14.sp)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))

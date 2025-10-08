@@ -1,38 +1,41 @@
 package br.com.udesc.prototipotrabalho1.data
 
 import android.os.Build
+import androidx.annotation.RequiresApi
 import br.com.udesc.prototipotrabalho1.data.repository.FakeFamilyRepositoryImpl
+import br.com.udesc.prototipotrabalho1.data.repository.FakeInteractionRepositoryImpl
 import br.com.udesc.prototipotrabalho1.data.repository.FakeMemberRepositoryImpl
 import br.com.udesc.prototipotrabalho1.data.repository.FakeVisitRepositoryImpl
 import br.com.udesc.prototipotrabalho1.domain.repository.FamilyRepository
+import br.com.udesc.prototipotrabalho1.domain.repository.InteractionRepository
 import br.com.udesc.prototipotrabalho1.domain.repository.MemberRepository
 import br.com.udesc.prototipotrabalho1.domain.repository.VisitRepository
-import br.com.udesc.prototipotrabalho1.domain.usecase.AddMemberUseCase
-import br.com.udesc.prototipotrabalho1.domain.usecase.GetFamiliesUseCase
-import br.com.udesc.prototipotrabalho1.domain.usecase.GetFamilyByIdUseCase
-import br.com.udesc.prototipotrabalho1.domain.usecase.GetMembersByFamilyIdUseCase
-import br.com.udesc.prototipotrabalho1.domain.usecase.GetVisitByIdUseCase
-import br.com.udesc.prototipotrabalho1.domain.usecase.GetVisitsByDateUseCase
+import br.com.udesc.prototipotrabalho1.domain.usecase.*
 
 /**
  * Interface para o contêiner de dependências.
- * Foi atualizada para incluir as dependências de Visita.
+ * Foi atualizada para incluir as dependências de Interação.
  */
 interface AppContainer {
+    // Família
     val familyRepository: FamilyRepository
     val getFamiliesUseCase: GetFamiliesUseCase
     val getFamilyByIdUseCase: GetFamilyByIdUseCase
 
-    // Dependências de Visita
+    // Visita
     val visitRepository: VisitRepository
     val getVisitsByDateUseCase: GetVisitsByDateUseCase
     val getVisitByIdUseCase: GetVisitByIdUseCase
 
-    // Membro (Adicionado)
+    // Membro
     val memberRepository: MemberRepository
     val addMemberUseCase: AddMemberUseCase
-    val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase // Adicionado
+    val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase
 
+    // Interação (Adicionado)
+    val interactionRepository: InteractionRepository
+    val addInteractionUseCase: AddInteractionUseCase
+    val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase
 }
 
 /**
@@ -44,41 +47,32 @@ class DefaultAppContainer : AppContainer {
     override val familyRepository: FamilyRepository by lazy {
         FakeFamilyRepositoryImpl()
     }
-
     override val getFamiliesUseCase: GetFamiliesUseCase by lazy {
         GetFamiliesUseCase(familyRepository)
     }
-
     override val getFamilyByIdUseCase: GetFamilyByIdUseCase by lazy {
         GetFamilyByIdUseCase(familyRepository)
     }
 
     // --- Dependências de Visita ---
     override val visitRepository: VisitRepository by lazy {
-        // Adicionamos uma verificação de segurança, pois FakeVisitRepositoryImpl
-        // usa APIs a partir do Android Oreo (API 26).
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             FakeVisitRepositoryImpl()
         } else {
-            // Em um app real, poderíamos fornecer uma implementação alternativa
-            // para versões mais antigas do Android ou simplesmente lançar um erro.
             throw IllegalStateException("VisitRepository requires API level 26 or higher.")
         }
     }
-
     override val getVisitsByDateUseCase: GetVisitsByDateUseCase by lazy {
         GetVisitsByDateUseCase(visitRepository)
     }
-
     override val getVisitByIdUseCase: GetVisitByIdUseCase by lazy {
         GetVisitByIdUseCase(visitRepository)
     }
 
-    // --- Dependências de Membro (Adicionado) ---
+    // --- Dependências de Membro ---
     override val memberRepository: MemberRepository by lazy {
         FakeMemberRepositoryImpl()
     }
-
     override val addMemberUseCase: AddMemberUseCase by lazy {
         AddMemberUseCase(memberRepository)
     }
@@ -86,4 +80,22 @@ class DefaultAppContainer : AppContainer {
         GetMembersByFamilyIdUseCase(memberRepository)
     }
 
+    // --- Dependências de Interação (Adicionado) ---
+    override val interactionRepository: InteractionRepository by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            FakeInteractionRepositoryImpl()
+        } else {
+            throw IllegalStateException("InteractionRepository requires API level 26 or higher.")
+        }
+    }
+    override val addInteractionUseCase: AddInteractionUseCase by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AddInteractionUseCase(interactionRepository)
+        } else {
+            throw IllegalStateException("AddInteractionUseCase requires API level 26 or higher.")
+        }
+    }
+    override val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase by lazy {
+        GetInteractionsByFamilyIdUseCase(interactionRepository)
+    }
 }

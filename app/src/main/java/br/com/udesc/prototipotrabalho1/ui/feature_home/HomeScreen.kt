@@ -66,7 +66,7 @@ fun HomeScreen(
                 "Ilustração de um médico",
                 Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(300.dp)
                     .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )

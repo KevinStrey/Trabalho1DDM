@@ -43,18 +43,17 @@ import br.com.udesc.prototipotrabalho1.ui.feature_families.family_members.Family
 import br.com.udesc.prototipotrabalho1.ui.feature_families.family_members.FamilyMembersViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_family.NewFamilyScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_family.NewFamilyViewModelFactory
-import br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction.NewInteractionScreen
-import br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction.NewInteractionViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_member.NewMemberScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_families.new_member.NewMemberViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_home.HomeScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_home.HomeViewModelFactory
-import br.com.udesc.prototipotrabalho1.ui.theme.PrototipoTrabalho1Theme
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction.NewInteractionScreen
+import br.com.udesc.prototipotrabalho1.ui.feature_visits.new_interaction.NewInteractionViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_list.HomeVisitsScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_list.HomeVisitsViewModelFactory
 import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_report.VisitReportScreen
 import br.com.udesc.prototipotrabalho1.ui.feature_visits.visit_report.VisitReportViewModelFactory
-
+import br.com.udesc.prototipotrabalho1.ui.theme.PrototipoTrabalho1Theme
 
 
 sealed class NavRoute(val route: String) {
@@ -65,7 +64,9 @@ sealed class NavRoute(val route: String) {
     object NewDormitory : NavRoute("new_dormitory")
 
 
-    object NewInteraction : NavRoute("new_interaction")
+    object NewInteraction : NavRoute("new_interaction/{familyId}") {
+        fun createRoute(familyId: Int) = "new_interaction/$familyId"
+    }
     object Visit : NavRoute("visit") // <-- ADICIONE/MODIFIQUE ESTA LINHA
     object NewMember : NavRoute("new_member/{familyId}") {
         fun createRoute(familyId: Int) = "new_member/$familyId"
@@ -160,10 +161,12 @@ fun MainApp(appContainer: AppContainer) {
                 val familyId = backStackEntry.arguments?.getInt("familyId")
 
                 if (familyId != null) {
+                    // ATUALIZAÇÃO: Passe o novo UseCase para a Factory
                     val factory = FamilyMembersViewModelFactory(
                         familyId = familyId,
                         getFamilyByIdUseCase = appContainer.getFamilyByIdUseCase,
-                        getMembersByFamilyIdUseCase = appContainer.getMembersByFamilyIdUseCase // <-- Adicionado
+                        getMembersByFamilyIdUseCase = appContainer.getMembersByFamilyIdUseCase,
+                        getInteractionsByFamilyIdUseCase = appContainer.getInteractionsByFamilyIdUseCase // <-- Adicionado
                     )
                     FamilyMembersScreen(
                         navController = navController,
@@ -173,6 +176,7 @@ fun MainApp(appContainer: AppContainer) {
                     Text("Erro: ID da família não encontrado.")
                 }
             }
+
 
 
             composable(NavRoute.NewFamily.route) {
@@ -212,14 +216,25 @@ fun MainApp(appContainer: AppContainer) {
                 )
             }
 
-            // --- CONEXÃO DA NOVA TELA DE NOVA INTERAÇÃO ---
-            composable(NavRoute.NewInteraction.route) {
-                val factory = NewInteractionViewModelFactory()
-                NewInteractionScreen(
-                    navController = navController,
-                    factory = factory
-                )
+            composable(
+                route = NavRoute.NewInteraction.route,
+                arguments = listOf(navArgument("familyId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val familyId = backStackEntry.arguments?.getInt("familyId")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && familyId != null) {
+                    val factory = NewInteractionViewModelFactory(
+                        familyId = familyId,
+                        addInteractionUseCase = appContainer.addInteractionUseCase
+                    )
+                    NewInteractionScreen(
+                        navController = navController,
+                        factory = factory
+                    )
+                } else {
+                    Text("Erro: ID da família não encontrado ou versão do Android incompatível.")
+                }
             }
+
 
             // --- CONEXÃO DA NOVA TELA DE VISITAS ---
             composable(NavRoute.Visit.route) {

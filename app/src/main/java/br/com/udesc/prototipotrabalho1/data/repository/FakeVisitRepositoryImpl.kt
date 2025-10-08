@@ -22,7 +22,7 @@ class FakeVisitRepositoryImpl : VisitRepository {
             familyId = 1,
             familyName = "Família Silva",
             address = "Rua das Flores, 123",
-            date = LocalDate.of(2025, 10, 8) // Usando a data que estava no seu layout
+            date = LocalDate.of(2025, 10, 8)
         ),
         Visit(
             id = 2,
