@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import br.com.udesc.prototipotrabalho1.NavRoute
 
 @Composable
 fun NewFamilyScreen(
@@ -49,10 +50,11 @@ fun NewFamilyScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = { navController.popBackStack() },
+        navController = navController,
         onSave = {
             // TODO: Chamar o ViewModel para salvar os dados
             navController.popBackStack()
-        }
+        },
     )
 }
 
@@ -62,7 +64,8 @@ private fun NewFamilyContent(
     uiState: NewFamilyUiState,
     onEvent: (NewFamilyEvent) -> Unit,
     onNavigateBack: () -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    navController: NavController
 ) {
     val backgroundColor = Color(0xFFF0F8F7)
     val textFieldBackgroundColor = Color(0xFFE0F2F1)
@@ -144,7 +147,12 @@ private fun NewFamilyContent(
             }
             Spacer(Modifier.height(24.dp))
             Button(
-                onClick = { /* TODO: Navegar para Adicionar Membro */ },
+                onClick = {
+                    // TODO: A lógica final seria obter o ID da família recém-salva.
+                    // Por enquanto, usamos um ID de exemplo para a navegação funcionar.
+                    val DUMMY_FAMILY_ID = 1
+                    navController.navigate(NavRoute.NewMember.createRoute(DUMMY_FAMILY_ID))
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(

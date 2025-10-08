@@ -63,9 +63,13 @@ sealed class NavRoute(val route: String) {
     object Settings : NavRoute("settings")
     object NewFamily : NavRoute("new_family")
     object NewDormitory : NavRoute("new_dormitory")
-    object NewMember : NavRoute("new_member")
+
+
     object NewInteraction : NavRoute("new_interaction")
     object Visit : NavRoute("visit") // <-- ADICIONE/MODIFIQUE ESTA LINHA
+    object NewMember : NavRoute("new_member/{familyId}") {
+        fun createRoute(familyId: Int) = "new_member/$familyId"
+    }
     object FamilyMembers : NavRoute("family_members/{familyId}") {
         fun createRoute(familyId: Int) = "family_members/$familyId"
     }
@@ -158,7 +162,8 @@ fun MainApp(appContainer: AppContainer) {
                 if (familyId != null) {
                     val factory = FamilyMembersViewModelFactory(
                         familyId = familyId,
-                        getFamilyByIdUseCase = appContainer.getFamilyByIdUseCase
+                        getFamilyByIdUseCase = appContainer.getFamilyByIdUseCase,
+                        getMembersByFamilyIdUseCase = appContainer.getMembersByFamilyIdUseCase // <-- Adicionado
                     )
                     FamilyMembersScreen(
                         navController = navController,
@@ -168,6 +173,7 @@ fun MainApp(appContainer: AppContainer) {
                     Text("Erro: ID da família não encontrado.")
                 }
             }
+
 
             composable(NavRoute.NewFamily.route) {
                 val factory = NewFamilyViewModelFactory()
@@ -185,9 +191,21 @@ fun MainApp(appContainer: AppContainer) {
                 )
             }
 
-            // --- CONEXÃO DA NOVA TELA DE MEMBRO ---
-            composable(NavRoute.NewMember.route) {
-                val factory = NewMemberViewModelFactory()
+            // --- CONEXÃO DA NOVA TELA DE MEMBRO (CORRIGIDA) ---
+            composable(
+                route = NavRoute.NewMember.route,
+                arguments = listOf(navArgument("familyId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                // 1. Extraia o familyId que veio na rota
+                val familyId = backStackEntry.arguments?.getInt("familyId") ?: -1
+
+                // 2. Crie a factory passando as dependências necessárias
+                val factory = NewMemberViewModelFactory(
+                    familyId = familyId,
+                    addMemberUseCase = appContainer.addMemberUseCase
+                )
+
+                // 3. Chame a tela com a factory
                 NewMemberScreen(
                     navController = navController,
                     factory = factory

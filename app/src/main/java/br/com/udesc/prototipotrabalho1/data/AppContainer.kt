@@ -2,11 +2,15 @@ package br.com.udesc.prototipotrabalho1.data
 
 import android.os.Build
 import br.com.udesc.prototipotrabalho1.data.repository.FakeFamilyRepositoryImpl
+import br.com.udesc.prototipotrabalho1.data.repository.FakeMemberRepositoryImpl
 import br.com.udesc.prototipotrabalho1.data.repository.FakeVisitRepositoryImpl
 import br.com.udesc.prototipotrabalho1.domain.repository.FamilyRepository
+import br.com.udesc.prototipotrabalho1.domain.repository.MemberRepository
 import br.com.udesc.prototipotrabalho1.domain.repository.VisitRepository
+import br.com.udesc.prototipotrabalho1.domain.usecase.AddMemberUseCase
 import br.com.udesc.prototipotrabalho1.domain.usecase.GetFamiliesUseCase
 import br.com.udesc.prototipotrabalho1.domain.usecase.GetFamilyByIdUseCase
+import br.com.udesc.prototipotrabalho1.domain.usecase.GetMembersByFamilyIdUseCase
 import br.com.udesc.prototipotrabalho1.domain.usecase.GetVisitByIdUseCase
 import br.com.udesc.prototipotrabalho1.domain.usecase.GetVisitsByDateUseCase
 
@@ -23,6 +27,12 @@ interface AppContainer {
     val visitRepository: VisitRepository
     val getVisitsByDateUseCase: GetVisitsByDateUseCase
     val getVisitByIdUseCase: GetVisitByIdUseCase
+
+    // Membro (Adicionado)
+    val memberRepository: MemberRepository
+    val addMemberUseCase: AddMemberUseCase
+    val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase // Adicionado
+
 }
 
 /**
@@ -63,4 +73,17 @@ class DefaultAppContainer : AppContainer {
     override val getVisitByIdUseCase: GetVisitByIdUseCase by lazy {
         GetVisitByIdUseCase(visitRepository)
     }
+
+    // --- Dependências de Membro (Adicionado) ---
+    override val memberRepository: MemberRepository by lazy {
+        FakeMemberRepositoryImpl()
+    }
+
+    override val addMemberUseCase: AddMemberUseCase by lazy {
+        AddMemberUseCase(memberRepository)
+    }
+    override val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase by lazy {
+        GetMembersByFamilyIdUseCase(memberRepository)
+    }
+
 }

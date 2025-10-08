@@ -1,6 +1,5 @@
 package br.com.udesc.prototipotrabalho1.ui.feature_families.family_members
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,9 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,7 +31,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import br.com.udesc.prototipotrabalho1.NavRoute
+import br.com.udesc.prototipotrabalho1.domain.model.Member
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import br.com.udesc.prototipotrabalho1.R
+
 
 @Composable
 fun FamilyMembersScreen(
@@ -45,7 +48,10 @@ fun FamilyMembersScreen(
     FamilyMembersContent(
         uiState = uiState,
         onNavigateBack = { navController.popBackStack() },
-        onNewInteraction = { navController.navigate(NavRoute.NewInteraction.route) }
+        onNewInteraction = { navController.navigate(NavRoute.NewInteraction.route) },
+        onAddMember = { familyId ->
+            navController.navigate(NavRoute.NewMember.createRoute(familyId))
+        }
     )
 }
 
@@ -54,7 +60,8 @@ fun FamilyMembersScreen(
 private fun FamilyMembersContent(
     uiState: FamilyMembersUiState,
     onNavigateBack: () -> Unit,
-    onNewInteraction: () -> Unit
+    onNewInteraction: () -> Unit,
+    onAddMember: (Int) -> Unit
 ) {
     val family = uiState.family
     val highlightColor = Color(0xFF26C4C6)
@@ -64,16 +71,17 @@ private fun FamilyMembersContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        family?.name ?: "Carregando...",
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                },
+                title = { Text(family?.name ?: "Carregando...", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    family?.let {
+                        IconButton(onClick = { onAddMember(it.id) }) {
+                            Icon(Icons.Default.Add, contentDescription = "Adicionar Membro")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = backgroundColor)
@@ -81,25 +89,32 @@ private fun FamilyMembersContent(
         },
         containerColor = backgroundColor
     ) { innerPadding ->
-        // A Column agora tem o modificador verticalScroll
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // ✅ CORREÇÃO ADICIONADA AQUI
+                .verticalScroll(rememberScrollState())
         ) {
-            if (uiState.isLoading) {
+            if (uiState.isLoading && uiState.family == null) { // Mostra o loading apenas na carga inicial
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (family != null) {
-                // Conteúdo da tela (Membros, Domicílio, Interações)
+                // --- SEÇÃO DE MEMBROS DA FAMÍLIA (DINÂMICA) ---
                 Text("Membros da Família", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
-                FamilyMemberItem(painterResource(id = R.drawable.maria), "Maria Silva", "Parente", highlightColor)
-                FamilyMemberItem(painterResource(id = R.drawable.jose), "José Silva", "Parente", highlightColor)
-                FamilyMemberItem(painterResource(id = R.drawable.ana), "Ana Silva", "Parente", highlightColor)
+
+                if (uiState.members.isEmpty()) {
+                    Text("Nenhum membro cadastrado.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                } else {
+                    // Renderiza a lista de membros que vem do ViewModel
+                    uiState.members.forEach { member ->
+                        FamilyMemberItem(member = member, roleColor = highlightColor)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text("Domicílio", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -126,7 +141,6 @@ private fun FamilyMembersContent(
                         Text("Nova Interação", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
-                // Adiciona um espaçador no final para melhor visualização ao rolar
                 Spacer(modifier = Modifier.height(16.dp))
 
             } else {
@@ -138,27 +152,33 @@ private fun FamilyMembersContent(
     }
 }
 
-// As funções FamilyMemberItem e InfoItem continuam as mesmas do arquivo original
+// ATUALIZADO para receber um objeto Member
 @Composable
-fun FamilyMemberItem(image: Painter, name: String, role: String, roleColor: Color) {
+fun FamilyMemberItem(member: Member, roleColor: Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Image(
-            painter = image,
-            contentDescription = "Foto de $name",
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(member.photoUri)
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(R.drawable.ic_launcher_foreground), // Imagem de fallback
+            error = painterResource(R.drawable.ic_launcher_foreground),     // Imagem em caso de erro
+            contentDescription = "Foto de ${member.name}",
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(50.dp)
                 .clip(CircleShape)
+                .background(Color.LightGray)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Text(text = role, fontSize = 14.sp, color = roleColor)
+            Text(text = member.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(text = member.kinship, fontSize = 14.sp, color = roleColor)
         }
     }
 }
