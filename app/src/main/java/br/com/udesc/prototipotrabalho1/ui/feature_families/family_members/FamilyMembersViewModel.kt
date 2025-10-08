@@ -22,29 +22,40 @@ class FamilyMembersViewModel(
     private val getFamilyByIdUseCase: GetFamilyByIdUseCase,
     private val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase,
     private val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase,
-    private val getDormitoryByFamilyIdUseCase: GetDormitoryByFamilyIdUseCase // Adicionado
+    private val getDormitoryByFamilyIdUseCase: GetDormitoryByFamilyIdUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FamilyMembersUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _uiEvent = MutableSharedFlow<UiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
     init {
         loadFamilyDetails()
         loadMembers()
         loadInteractions()
-        loadDormitory() // Adicionado
+        loadDormitory()
+    }
+
+    fun onEvent(event: FamilyMembersEvent) {
+        when(event) {
+            is FamilyMembersEvent.InteractionClicked -> {
+                // Se a interação for clicável, emite um evento para navegar
+                if (event.interaction.type != "Contato telefônico") {
+                    viewModelScope.launch {
+                        _uiEvent.emit(UiEvent.NavigateToVisitReport(event.interaction.id))
+                    }
+                }
+            }
+        }
     }
 
     private fun loadFamilyDetails() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val family = getFamilyByIdUseCase(familyId)
-            _uiState.update {
-                it.copy(
-                    // A isLoading só termina de fato quando todos os dados carregarem
-                    family = family
-                )
-            }
+            _uiState.update { it.copy(family = family) }
         }
     }
 
@@ -64,24 +75,30 @@ class FamilyMembersViewModel(
             .launchIn(viewModelScope)
     }
 
-    // Nova função para carregar o domicílio
     private fun loadDormitory() {
         getDormitoryByFamilyIdUseCase(familyId)
             .onEach { dormitory ->
-                _uiState.update { it.copy(dormitory = dormitory, isLoading = false) } // Agora sim finaliza o loading
+                _uiState.update { it.copy(dormitory = dormitory, isLoading = false) }
             }
             .launchIn(viewModelScope)
     }
 }
 
-// O UiState agora contém o objeto Dormitory
 data class FamilyMembersUiState(
     val isLoading: Boolean = true,
     val family: Family? = null,
-    val dormitory: Dormitory? = null, // Adicionado
+    val dormitory: Dormitory? = null,
     val members: List<Member> = emptyList(),
     val interactions: List<Interaction> = emptyList()
 )
+
+sealed interface FamilyMembersEvent {
+    data class InteractionClicked(val interaction: Interaction) : FamilyMembersEvent
+}
+
+sealed interface UiEvent {
+    data class NavigateToVisitReport(val visitId: Int) : UiEvent
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 class FamilyMembersViewModelFactory(
@@ -89,7 +106,7 @@ class FamilyMembersViewModelFactory(
     private val getFamilyByIdUseCase: GetFamilyByIdUseCase,
     private val getMembersByFamilyIdUseCase: GetMembersByFamilyIdUseCase,
     private val getInteractionsByFamilyIdUseCase: GetInteractionsByFamilyIdUseCase,
-    private val getDormitoryByFamilyIdUseCase: GetDormitoryByFamilyIdUseCase // Adicionado
+    private val getDormitoryByFamilyIdUseCase: GetDormitoryByFamilyIdUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FamilyMembersViewModel::class.java)) {

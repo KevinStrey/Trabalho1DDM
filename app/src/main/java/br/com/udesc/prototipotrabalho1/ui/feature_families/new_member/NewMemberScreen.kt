@@ -79,7 +79,7 @@ private fun NewMemberContent(
     snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit
 ) {
-    val backgroundColor = Color(0xFFF0F8F7)
+    val backgroundColor = Color(0xFFEBFEFE)
     val highlightColor = Color(0xFF26C4C6)
     val kinshipOptions = listOf("Chefe da Família", "Cônjuge", "Filho(a)", "Outro Parente")
     val textFieldBackgroundColor = Color(0xFFE0F2F1) // Cor para o TextField

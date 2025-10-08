@@ -67,7 +67,7 @@ private fun NewFamilyContent(
     onSave: () -> Unit,
     navController: NavController
 ) {
-    val backgroundColor = Color(0xFFF0F8F7)
+    val backgroundColor = Color(0xFFFFFFFF)
     val textFieldBackgroundColor = Color(0xFFE0F2F1)
     val highlightColor = Color(0xFF26C4C6)
     val placeholderColor = Color.Gray.copy(alpha = 0.7f)

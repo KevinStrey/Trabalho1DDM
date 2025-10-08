@@ -54,7 +54,7 @@ private fun NewDormitoryContent(
     snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit
 ) {
-    val backgroundColor = Color(0xFFF0F8F7)
+    val backgroundColor = Color(0xFFFFFFFF)
     val highlightColor = Color(0xFF26C4C6)
 
     Scaffold(

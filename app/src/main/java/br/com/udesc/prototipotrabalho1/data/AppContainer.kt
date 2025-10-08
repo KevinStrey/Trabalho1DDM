@@ -97,7 +97,7 @@ class DefaultAppContainer : AppContainer {
         GetInteractionsByFamilyIdUseCase(interactionRepository)
     }
 
-    // --- Dependências de Domicílio (Adicionado) ---
+    // --- Dependências de Domicílio ---
     override val dormitoryRepository: DormitoryRepository by lazy {
         FakeDormitoryRepositoryImpl()
     }

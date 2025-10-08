@@ -2,14 +2,30 @@ package br.com.udesc.prototipotrabalho1.ui.feature_home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,8 +47,7 @@ fun HomeScreen(
     navController: NavController,
     factory: HomeViewModelFactory
 ) {
-    // Embora não usado ativamente ainda, o ViewModel agora faz parte da tela,
-    // mantendo o padrão arquitetural.
+
     val viewModel: HomeViewModel = viewModel(factory = factory)
 
     Scaffold(
@@ -99,7 +114,6 @@ fun HomeScreen(
                         // TODO: No futuro, esta ação deve primeiro pedir ao usuário
                         // para selecionar uma família para obter um ID real.
                         // Por enquanto, usamos um ID de exemplo.
-                        val DUMMY_FAMILY_ID = 1
                         navController.navigate(NavRoute.NewDormitory.route)
                     }
                 )
